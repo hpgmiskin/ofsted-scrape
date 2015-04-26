@@ -3,3 +3,10 @@ venv/
 
 #Python files
 *.pyc
+
+#Saved Files
+cache/
+schools/
+
+#Other files
+examples/
