@@ -17,7 +17,7 @@ class SchoolSearch():
         self.schoolIDs = []
         self.schools = []
 
-    def config(self,postcode,distance):
+    def config(self,postcode,distance = 5):
         """Configuration for the searching of schools search
 
         Params:
@@ -118,6 +118,7 @@ class SchoolSearch():
 
 if (__name__ == "__main__"):
     schoolSearch = SchoolSearch()
+    schoolSearch.config("SW7 2AZ")
     schoolSearch.searchSchools()
     schoolSearch.setSchoolDetails()
     schoolSearch.printBadSchools()

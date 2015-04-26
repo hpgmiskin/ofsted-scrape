@@ -8,6 +8,7 @@ venv/
 cache/
 schools/
 reports/
+results/
 
 #Other files
 examples/

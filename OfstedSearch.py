@@ -37,7 +37,7 @@ class OfsteadSearch:
 
         url = urlBase + urlPath
         report = getPDF(url)
-        savePDF(self.filename,report)
+        savePDF(self.filename(),report)
 
 if (__name__ == "__main__"):
     filenames = glob.glob("schools/*.json")
