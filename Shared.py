@@ -5,6 +5,18 @@ import re
 import os
 import time
 
+def saveFile(filename,content):
+    with open(filename,"w") as openFile:
+        openFile.write(content)
+
+def savePDF(filename,content):
+    with open(filename,"wb") as openFile:
+        openFile.write(content)
+
+def getPDF(url):
+    page = urllib.request.urlopen(url)
+    return page.read()
+
 def cache(function):
     """Returns the given function unless a cached version is available 
     with the given arguments
