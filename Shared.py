@@ -4,6 +4,15 @@ import urllib.parse
 import re
 import os
 import time
+import json
+
+def saveJSON(filename,jsonObject,folder=None):
+
+    if folder:
+        filename = os.path.join(folder,filename)
+
+    jsonString = json.dumps(jsonObject)
+    saveFile(filename,jsonString)
 
 def saveFile(filename,content):
     with open(filename,"w") as openFile:
