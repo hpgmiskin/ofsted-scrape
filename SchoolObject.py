@@ -4,11 +4,8 @@ import json
 
 class SchoolObject():
 
-    def __init__(self,schoolID):
-        self.id = schoolID
-
-        self.name = ""
-        self.head = ""
+    def __init__(self):
+        pass
 
     def setName(self,name):
         self.name = name
@@ -50,17 +47,10 @@ class SchoolObject():
 
     def __str__(self):
 
-        try:
-            date = time.strftime("%d/%m/%y",self.date)
-        except TypeError:
-            date = self.date
-
-        string = "{} ({}) - Ofsted Grade {} on {}".format(self.name,
-            self.head,
-            self.grade,
-            date
+        string = "{} ({}) - Ofsted Grade {}".format(
+            self.schoolName,
+            self.headteacher,
+            self.ofstedGrade
             )
-
-        # more = "\n" + str(self.__dict__)
 
         return string

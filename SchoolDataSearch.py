@@ -1,12 +1,12 @@
-from bs4 import BeautifulSoup
-import urllib.parse
-
+import os
 import re
 import time
+import json
 
-from Shared import getPage
+import urllib.parse
+
+from Shared import getPage, saveJSON
 from SchoolObject import SchoolObject
-from PageUtils import PageError, getName, getHead, getItems, getOfsted
 
 class SchoolSearch():
 
@@ -14,7 +14,6 @@ class SchoolSearch():
         self.postcode = "SW17 8RW"
         self.distance = 5
 
-        self.schoolIDs = []
         self.schools = []
 
     def config(self,postcode,distance = 5):
@@ -37,14 +36,12 @@ class SchoolSearch():
         the school IDs are stored as a class varaibles for later use
         """
 
-        urlBase = "http://www.education.gov.uk"
-        urlPath = "/cgi-bin/schools/performance/search.pl?"
+        urlBase = "http://schoolsfinder.direct.gov.uk"
+        urlPath = "/school-location-search-results-json/&"
 
         params = (
-            ("searchType", "postcode"),
-            ("postcode", self.postcode),
-            ("distance", self.distance),
-            ("phase", "all")
+            ("searchString", self.postcode),
+            ("distanceValue", self.distance)
             )
 
         urlParams = urllib.parse.urlencode(params)
@@ -58,67 +55,149 @@ class SchoolSearch():
         results
         """
 
-        soup = BeautifulSoup(pageContent)
+        jsonObject = json.loads(pageContent)
 
-        # Obtain list of school IDS close to the given postcode
-        for school in soup.find_all(class_='schoolname'):
+        colums = jsonObject["QPOSTCODE"]["COLUMNS"]
+        data = jsonObject["QPOSTCODE"]["DATA"]
 
-            link = school.find("a")["href"]
-            match = re.match(r"\D*(\d+)\D*",link)
+        columnIDs = {}
 
-            if not match: continue
-            schoolID = match.group(1)
+        columnIDs["URN"] = colums.index("URN")
+        columnIDs["schoolName"] = colums.index("SCHOOLNAME")
+        columnIDs["toe_desc"] = colums.index("TOE_DESC")
 
-            self.schoolIDs.append(schoolID)
+        columnIDs["address"] = colums.index("ADDRESS1")
+        columnIDs["town"] = colums.index("TOWN")
+        columnIDs["county"] = colums.index("COUNTY")
+        columnIDs["postcode"] = colums.index("POSTCODE")
 
-    def setSchoolDetails(self):
+        columnIDs["headteacher"] = colums.index("HEADTEACHER")
+        columnIDs["contactName"] = colums.index("CONTACTNAME")
+        columnIDs["contactEmail"] = colums.index("CONTACTEMAIL")
+        columnIDs["telephone"] = colums.index("TELEPHONE")
+        columnIDs["URL"] = colums.index("URL")
 
-       for schoolID in self.schoolIDs:
+        columnIDs["isPrimary"] = colums.index("ISPRIMARY")
+        columnIDs["isSecondary"] = colums.index("ISSECONDARY")
+        columnIDs["isSixthform"] = colums.index("ISSIXTHFORM")
 
-            url = "http://www.education.gov.uk/schools/performance/school/{}".format(schoolID)
+        columnIDs["isPrivate"] = colums.index("ISPRIVATE")
+        columnIDs["isAcademy"] = colums.index("ISACADEMY")
+        columnIDs["isCityTech"] = colums.index("ISCITYTECH")
+        columnIDs["isExtended"] = colums.index("ISEXTENDED")
 
-            content = getPage(url)
-            soup = BeautifulSoup(content)
+        columnIDs["pupils"] = colums.index("PUPILS")
+        columnIDs["specialismA"] = colums.index("SPECIALISM")
+        columnIDs["specialismB"] = colums.index("SPECIALISM2")
+        columnIDs["capacity"] = colums.index("CAPACITY")
 
-            queries = ["Head","Street","Town","Postcode","Telephone number"]
+        columnIDs["ictLevel"] = colums.index("ICTLEVEL")
+        columnIDs["schoolSpecialismID"] = colums.index("SCHOOLSPECIALISMID")
 
-            try:
-                name = getName(soup)
-                attrObject = getItems(soup,queries)
-                date,grade,link = getOfsted(soup)
-            except PageError:
-                continue
+        columnIDs["latestKs2Percentlevel4"] = colums.index("LATESTKS2PERCENTLEVEL4")
+        columnIDs["latestKs3AvgPointScore"] = colums.index("LATESTKS3AVGPOINTSCORE")
+        columnIDs["latestGcseGradesac"] = colums.index("LATESTGCSEGRADESAC")
+        columnIDs["latestBacPercent"] = colums.index("LATESTBACPERCENT")
 
-            school = SchoolObject(schoolID)
-            school.url = url
-            school.setName(name)
-            school.setAttr(attrObject)
-            school.setOfsted(date,grade,link)
+        columnIDs["ofstedGrade"] = colums.index("LATESTOVERALLOFSTEDGRADE")
+        columnIDs["ofstedGradeOrdinal"] = colums.index("LATESTOVERALLOFSTEDGRADEORDINAL")
+        columnIDs["latestKs2PercentLevel4Ordinal"] = colums.index("LATESTKS2PERCENTLEVEL4ORDINAL")
+        columnIDs["latestGcseGradeSacOrdinal"] = colums.index("LATESTGCSEGRADESACORDINAL")
+        columnIDs["latestBacPercentOrdinal"] = colums.index("LATESTBACPERCENTORDINAL")
+        
+        for school in data:
 
-            self.schools.append(school)
+            schoolObject = {}
 
+            schoolObject["URN"] = school[columnIDs["URN"]]
+            schoolObject["schoolName"] = school[columnIDs["schoolName"]]
+            schoolObject["toe_desc"] = school[columnIDs["toe_desc"]]
+
+            schoolObject["address"] = school[columnIDs["address"]]
+            schoolObject["town"] = school[columnIDs["town"]]
+            schoolObject["county"] = school[columnIDs["county"]]
+            schoolObject["postcode"] = school[columnIDs["postcode"]]
+
+            schoolObject["headteacher"] = school[columnIDs["headteacher"]]
+            schoolObject["contactName"] = school[columnIDs["contactName"]]
+            schoolObject["contactEmail"] = school[columnIDs["contactEmail"]]
+            schoolObject["telephone"] = school[columnIDs["telephone"]]
+            schoolObject["URL"] = school[columnIDs["URL"]]
+
+            schoolObject["isPrimary"] = school[columnIDs["isPrimary"]]
+            schoolObject["isSecondary"] = school[columnIDs["isSecondary"]]
+            schoolObject["isSixthform"] = school[columnIDs["isSixthform"]]
+
+            schoolObject["isPrivate"] = school[columnIDs["isPrivate"]]
+            schoolObject["isAcademy"] = school[columnIDs["isAcademy"]]
+            schoolObject["isCityTech"] = school[columnIDs["isCityTech"]]
+            schoolObject["isExtended"] = school[columnIDs["isExtended"]]
+
+            schoolObject["pupils"] = school[columnIDs["pupils"]]
+            schoolObject["specialismA"] = school[columnIDs["specialismA"]]
+            schoolObject["specialismB"] = school[columnIDs["specialismB"]]
+            schoolObject["capacity"] = school[columnIDs["capacity"]]
+
+            schoolObject["ictLevel"] = school[columnIDs["ictLevel"]]
+            schoolObject["schoolSpecialismID"] = school[columnIDs["schoolSpecialismID"]]
+
+            # schoolObject["latestKs2Percentlevel4"] = school[columnIDs["latestKs2Percentlevel4"]]
+            # schoolObject["latestKs3AvgPointScore"] = school[columnIDs["latestKs3AvgPointScore"]]
+            # schoolObject["latestGcseGradesac"] = school[columnIDs["latestGcseGradesac"]]
+            # schoolObject["latestBacPercent"] = school[columnIDs["latestBacPercent"]]
+
+            schoolObject["ofstedGrade"] = school[columnIDs["ofstedGrade"]]
+            schoolObject["ofstedGradeOrdinal"] = school[columnIDs["ofstedGradeOrdinal"]]
+            # schoolObject["latestKs2PercentLevel4Ordinal"] = school[columnIDs["latestKs2PercentLevel4Ordinal"]]
+            # schoolObject["latestGcseGradeSacOrdinal"] = school[columnIDs["latestGcseGradeSacOrdinal"]]
+            # schoolObject["latestBacPercentOrdinal"] = school[columnIDs["latestBacPercentOrdinal"]]
+
+            self.addSchool(schoolObject)
+
+    def addSchool(self,schoolObject):
+
+        try:
+            ofstedOverall = schoolObject["ofstedGrade"].split("-")
+            schoolObject["ofstedGrade"] = int(ofstedOverall[0].strip())
+        except ValueError:
+            schoolObject["ofstedGrade"] = 0
+
+        school = SchoolObject()
+        school.setAttr(schoolObject)
+        self.schools.append(school)
+
+        filename = "{}.json".format(schoolObject["URN"])
+        folder = "schools"
+        saveJSON(filename,schoolObject,folder)
 
     def printBadSchools(self):
         """Returns the schools whos ofsted grade is bellow the given
         """
 
-        def date(school):
-            return school.date
+        def show(school):
+            "Only show schools with poor ofsted"
 
-        self.schools.sort(key=date)
+            logic = (
+                (school.ofstedGrade == 0) and
+                (school.isPrimary) and
+                (school.isPrivate)
+                )
+
+            return logic
+
+        def sort(school):
+            return school.pupils
+
+        self.schools.sort(key=sort)
 
         for school in self.schools:
 
-            if school.grade > 2:
+            if show(school):
                 print(school)
-                school.save()
-
-            # if school.date > time.strptime("01/01/14")
 
 
 if (__name__ == "__main__"):
     schoolSearch = SchoolSearch()
-    schoolSearch.config("SW7 2AZ")
+    schoolSearch.config("SW7 2BX")
     schoolSearch.searchSchools()
-    schoolSearch.setSchoolDetails()
     schoolSearch.printBadSchools()
