@@ -198,6 +198,6 @@ class SchoolSearch():
 
 if (__name__ == "__main__"):
     schoolSearch = SchoolSearch()
-    schoolSearch.config("SW7 2AZ")
+    schoolSearch.config("SW7 2BX")
     schoolSearch.searchSchools()
     schoolSearch.printBadSchools()

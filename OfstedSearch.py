@@ -44,7 +44,7 @@ if (__name__ == "__main__"):
 
     for filename in filenames:
 
-        schoolObject = SchoolObject(None)
+        schoolObject = SchoolObject()
         schoolObject.load(filename)
 
         ofsteadSearch = OfsteadSearch()
